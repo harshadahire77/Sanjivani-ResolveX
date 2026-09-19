@@ -910,5 +910,18 @@ export const getApiErrorMessage = (
 // ==========================================================
 // DEFAULT EXPORT
 // ==========================================================
+// ==========================================================
+// AUTH STATUS HELPERS
+// ==========================================================
 
+export const isLoggedIn = () => {
+  const token = getToken();
+
+  return Boolean(
+    token &&
+    String(token).trim() !== ""
+  );
+};
+
+export const isAuthenticated = isLoggedIn;
 export default api;
