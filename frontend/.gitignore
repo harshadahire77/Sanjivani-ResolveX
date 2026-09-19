@@ -1,41 +1,21 @@
-# =========================
-# FRONTEND
-# =========================
-
+# Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.env
 frontend/.env.local
 frontend/.env.production
 
-# =========================
-# BACKEND
-# =========================
-
+# Backend
 backend/target/
-backend/.idea/
-backend/.vscode/
-
-# Environment / secrets
 backend/.env
 
-# =========================
-# IDE / OS
-# =========================
-
+# IDE
 .vscode/
 .idea/
+
+# OS
 .DS_Store
 Thumbs.db
 
-# =========================
-# LOGS
-# =========================
-
+# Logs
 *.log
-
-# =========================
-# OPTIONAL DESKTOP BUILD
-# =========================
-
-desktop/target/
