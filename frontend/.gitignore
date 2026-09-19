@@ -1,21 +1,21 @@
-# Frontend
-frontend/node_modules/
-frontend/dist/
-frontend/.env
-frontend/.env.local
-frontend/.env.production
+# Dependencies
+node_modules/
 
-# Backend
-backend/target/
-backend/.env
+# Production build
+dist/
 
-# IDE
+# Environment files
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+
+# Editor
 .vscode/
 .idea/
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
