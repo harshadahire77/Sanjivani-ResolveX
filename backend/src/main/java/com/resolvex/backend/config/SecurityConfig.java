@@ -1,27 +1,18 @@
 package com.resolvex.backend.config;
 
-import com.resolvex.backend.security.JwtAuthenticationFilter;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.http.HttpMethod;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-
 import org.springframework.security.config.http.SessionCreationPolicy;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.security.web.SecurityFilterChain;
-
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import org.springframework.web.cors.CorsConfiguration;
@@ -39,13 +30,12 @@ public class SecurityConfig {
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter
     ) {
-        this.jwtAuthenticationFilter =
-                jwtAuthenticationFilter;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
-    // =====================================================
+    // =========================================================
     // SECURITY FILTER CHAIN
-    // =====================================================
+    // =========================================================
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -54,52 +44,43 @@ public class SecurityConfig {
 
         http
 
-                // -----------------------------------------
-                // CORS
-                // -----------------------------------------
+                // Enable CORS
                 .cors(cors ->
                         cors.configurationSource(
                                 corsConfigurationSource()
                         )
                 )
 
-                // -----------------------------------------
-                // CSRF
-                // JWT API does not use server-side sessions
-                // -----------------------------------------
+                // Disable CSRF because ResolveX uses JWT
                 .csrf(
                         AbstractHttpConfigurer::disable
                 )
 
-                // -----------------------------------------
-                // STATELESS SESSION
-                // -----------------------------------------
+                // JWT = stateless authentication
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
 
-                // -----------------------------------------
-                // ROUTE SECURITY
-                // -----------------------------------------
+                // Endpoint permissions
                 .authorizeHttpRequests(auth ->
                         auth
 
-                                // Allow CORS preflight requests
+                                // Allow browser CORS preflight
                                 .requestMatchers(
                                         HttpMethod.OPTIONS,
                                         "/**"
                                 )
                                 .permitAll()
 
-                                // Health endpoint
+                                // Backend health check
                                 .requestMatchers(
                                         "/api/health"
                                 )
                                 .permitAll()
 
-                                // Login / signup
+                                // Authentication endpoints
                                 .requestMatchers(
                                         "/api/auth/login",
                                         "/api/auth/signup",
@@ -107,20 +88,18 @@ public class SecurityConfig {
                                 )
                                 .permitAll()
 
-                                // Allow Spring error endpoint
+                                // Spring Boot error endpoint
                                 .requestMatchers(
                                         "/error"
                                 )
                                 .permitAll()
 
-                                // Everything else requires JWT
+                                // Everything else requires authentication
                                 .anyRequest()
                                 .authenticated()
                 )
 
-                // -----------------------------------------
-                // JWT FILTER
-                // -----------------------------------------
+                // JWT authentication filter
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -129,9 +108,9 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // =====================================================
+    // =========================================================
     // CORS CONFIGURATION
-    // =====================================================
+    // =========================================================
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -139,26 +118,23 @@ public class SecurityConfig {
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
-        // -------------------------------------------------
-        // FRONTENDS ALLOWED TO CALL THE BACKEND
-        // -------------------------------------------------
-
+        /*
+         * Frontends allowed to communicate with backend.
+         *
+         * Local development:
+         * http://localhost:5173
+         * http://127.0.0.1:5173
+         *
+         * Production:
+         * https://sanjivani-resolve-x.vercel.app
+         */
         configuration.setAllowedOrigins(
                 List.of(
-                        // Local Vite
                         "http://localhost:5173",
-
-                        // Local Vite alternative
                         "http://127.0.0.1:5173",
-
-                        // Production Vercel frontend
                         "https://sanjivani-resolve-x.vercel.app"
                 )
         );
-
-        // -------------------------------------------------
-        // HTTP METHODS
-        // -------------------------------------------------
 
         configuration.setAllowedMethods(
                 List.of(
@@ -171,10 +147,6 @@ public class SecurityConfig {
                 )
         );
 
-        // -------------------------------------------------
-        // REQUEST HEADERS
-        // -------------------------------------------------
-
         configuration.setAllowedHeaders(
                 List.of(
                         "Authorization",
@@ -185,23 +157,16 @@ public class SecurityConfig {
                 )
         );
 
-        // -------------------------------------------------
-        // RESPONSE HEADERS FRONTEND MAY ACCESS
-        // -------------------------------------------------
-
         configuration.setExposedHeaders(
                 List.of(
                         "Authorization"
                 )
         );
 
-        // -------------------------------------------------
-        // ALLOW AUTHENTICATED REQUESTS
-        // -------------------------------------------------
-
+        // Needed when authenticated requests are sent
         configuration.setAllowCredentials(true);
 
-        // Browser may cache preflight response
+        // Cache CORS preflight for 1 hour
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source =
@@ -215,18 +180,19 @@ public class SecurityConfig {
         return source;
     }
 
-    // =====================================================
+    // =========================================================
     // PASSWORD ENCODER
-    // =====================================================
+    // =========================================================
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+
         return new BCryptPasswordEncoder();
     }
 
-    // =====================================================
+    // =========================================================
     // AUTHENTICATION MANAGER
-    // =====================================================
+    // =========================================================
 
     @Bean
     public AuthenticationManager authenticationManager(
