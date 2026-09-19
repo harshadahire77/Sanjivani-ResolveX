@@ -1,0 +1,41 @@
+# =========================
+# FRONTEND
+# =========================
+
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# =========================
+# BACKEND
+# =========================
+
+backend/target/
+backend/.idea/
+backend/.vscode/
+
+# Environment / secrets
+backend/.env
+
+# =========================
+# IDE / OS
+# =========================
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# =========================
+# LOGS
+# =========================
+
+*.log
+
+# =========================
+# OPTIONAL DESKTOP BUILD
+# =========================
+
+desktop/target/
