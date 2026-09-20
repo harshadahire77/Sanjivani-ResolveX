@@ -12,6 +12,7 @@ import com.resolvex.backend.service.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.web.bind.annotation.*;
@@ -228,9 +229,8 @@ public class AuthController {
         );
 
         // ==================================================
-        // CRITICAL SECURITY RULE
+        // SECURITY RULE
         //
-        // Ignore request.getRole().
         // Public registration can create STUDENT only.
         // ==================================================
 
@@ -396,10 +396,10 @@ public class AuthController {
 
         if (
                 user.getRole() == null
-                ||
-                user
-                        .getRole()
-                        .isBlank()
+                        ||
+                        user
+                                .getRole()
+                                .isBlank()
         ) {
 
             return ResponseEntity
@@ -450,6 +450,121 @@ public class AuthController {
 
         return ResponseEntity.ok(
                 response
+        );
+    }
+
+    // ======================================================
+    // CURRENT LOGGED-IN USER
+    // GET /api/auth/me
+    // ======================================================
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(
+            Authentication authentication
+    ) {
+
+        // ==================================================
+        // CHECK AUTHENTICATION
+        // ==================================================
+
+        if (
+                authentication == null
+                        ||
+                        !authentication.isAuthenticated()
+        ) {
+
+            return ResponseEntity
+                    .status(
+                            HttpStatus.UNAUTHORIZED
+                    )
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Unauthorized."
+                            )
+                    );
+        }
+
+        // ==================================================
+        // GET EMAIL FROM JWT AUTHENTICATION
+        // ==================================================
+
+        String email =
+                authentication
+                        .getName();
+
+        if (isBlank(email)) {
+
+            return ResponseEntity
+                    .status(
+                            HttpStatus.UNAUTHORIZED
+                    )
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Unable to identify authenticated user."
+                            )
+                    );
+        }
+
+        email =
+                email
+                        .trim()
+                        .toLowerCase();
+
+        // ==================================================
+        // FIND USER
+        // ==================================================
+
+        Optional<User> optionalUser =
+                userRepository
+                        .findByEmail(
+                                email
+                        );
+
+        if (optionalUser.isEmpty()) {
+
+            return ResponseEntity
+                    .status(
+                            HttpStatus.NOT_FOUND
+                    )
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "User not found."
+                            )
+                    );
+        }
+
+        User user =
+                optionalUser.get();
+
+        // ==================================================
+        // ACTIVE ACCOUNT CHECK
+        // ==================================================
+
+        if (!user.isActive()) {
+
+            return ResponseEntity
+                    .status(
+                            HttpStatus.FORBIDDEN
+                    )
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Your account is inactive. Please contact the administrator."
+                            )
+                    );
+        }
+
+        // ==================================================
+        // RETURN CURRENT USER
+        // ==================================================
+
+        return ResponseEntity.ok(
+                safeUserResponse(
+                        user
+                )
         );
     }
 
