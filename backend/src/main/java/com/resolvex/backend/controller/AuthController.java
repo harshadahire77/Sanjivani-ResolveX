@@ -31,6 +31,7 @@ public class AuthController {
 
     private final JwtService jwtService;
 
+
     // ======================================================
     // CONSTRUCTOR
     // ======================================================
@@ -51,6 +52,7 @@ public class AuthController {
                 jwtService;
     }
 
+
     // ======================================================
     // REGISTER
     // POST /api/auth/register
@@ -67,12 +69,17 @@ public class AuthController {
         // NAME
         // ==================================================
 
-        if (isBlank(request.getName())) {
+        if (
+                isBlank(
+                        request.getName()
+                )
+        ) {
 
             return badRequest(
                     "Name is required."
             );
         }
+
 
         // ==================================================
         // UNIVERSITY ID
@@ -89,22 +96,32 @@ public class AuthController {
             );
         }
 
+
         // ==================================================
         // EMAIL
         // ==================================================
 
-        if (isBlank(request.getEmail())) {
+        if (
+                isBlank(
+                        request.getEmail()
+                )
+        ) {
 
             return badRequest(
                     "Email is required."
             );
         }
 
+
         // ==================================================
         // PASSWORD
         // ==================================================
 
-        if (isBlank(request.getPassword())) {
+        if (
+                isBlank(
+                        request.getPassword()
+                )
+        ) {
 
             return badRequest(
                     "Password is required."
@@ -123,6 +140,7 @@ public class AuthController {
             );
         }
 
+
         // ==================================================
         // NORMALIZE
         // ==================================================
@@ -139,13 +157,16 @@ public class AuthController {
                         .trim()
                         .toUpperCase();
 
+
         // ==================================================
         // DUPLICATE EMAIL
         // ==================================================
 
         if (
                 userRepository
-                        .existsByEmail(email)
+                        .existsByEmail(
+                                email
+                        )
         ) {
 
             return ResponseEntity
@@ -159,6 +180,7 @@ public class AuthController {
                             )
                     );
         }
+
 
         // ==================================================
         // DUPLICATE UNIVERSITY ID
@@ -182,6 +204,7 @@ public class AuthController {
                             )
                     );
         }
+
 
         // ==================================================
         // CREATE USER
@@ -228,6 +251,7 @@ public class AuthController {
                 )
         );
 
+
         // ==================================================
         // SECURITY RULE
         //
@@ -237,6 +261,7 @@ public class AuthController {
         user.setRole(
                 "STUDENT"
         );
+
 
         // ==================================================
         // PASSWORD HASH
@@ -248,6 +273,7 @@ public class AuthController {
                 )
         );
 
+
         // ==================================================
         // ACCOUNT STATUS
         // ==================================================
@@ -256,10 +282,16 @@ public class AuthController {
                 true
         );
 
+
+        // ==================================================
+        // SAVE USER
+        // ==================================================
+
         User savedUser =
                 userRepository.save(
                         user
                 );
+
 
         // ==================================================
         // RESPONSE
@@ -284,6 +316,7 @@ public class AuthController {
                 );
     }
 
+
     // ======================================================
     // LOGIN
     // POST /api/auth/login
@@ -298,19 +331,28 @@ public class AuthController {
         // VALIDATION
         // ==================================================
 
-        if (isBlank(request.getEmail())) {
+        if (
+                isBlank(
+                        request.getEmail()
+                )
+        ) {
 
             return badRequest(
                     "Email is required."
             );
         }
 
-        if (isBlank(request.getPassword())) {
+        if (
+                isBlank(
+                        request.getPassword()
+                )
+        ) {
 
             return badRequest(
                     "Password is required."
             );
         }
+
 
         // ==================================================
         // NORMALIZE EMAIL
@@ -322,6 +364,7 @@ public class AuthController {
                         .trim()
                         .toLowerCase();
 
+
         // ==================================================
         // FIND USER
         // ==================================================
@@ -332,7 +375,9 @@ public class AuthController {
                                 email
                         );
 
-        if (optionalUser.isEmpty()) {
+        if (
+                optionalUser.isEmpty()
+        ) {
 
             return ResponseEntity
                     .status(
@@ -348,6 +393,7 @@ public class AuthController {
 
         User user =
                 optionalUser.get();
+
 
         // ==================================================
         // PASSWORD CHECK
@@ -372,11 +418,14 @@ public class AuthController {
                     );
         }
 
+
         // ==================================================
         // ACTIVE ACCOUNT CHECK
         // ==================================================
 
-        if (!user.isActive()) {
+        if (
+                !user.isActive()
+        ) {
 
             return ResponseEntity
                     .status(
@@ -390,16 +439,17 @@ public class AuthController {
                     );
         }
 
+
         // ==================================================
         // ROLE CHECK
         // ==================================================
 
         if (
                 user.getRole() == null
-                        ||
-                        user
-                                .getRole()
-                                .isBlank()
+                ||
+                user
+                        .getRole()
+                        .isBlank()
         ) {
 
             return ResponseEntity
@@ -414,6 +464,7 @@ public class AuthController {
                     );
         }
 
+
         // ==================================================
         // GENERATE JWT
         // ==================================================
@@ -423,6 +474,7 @@ public class AuthController {
                         .generateToken(
                                 user
                         );
+
 
         // ==================================================
         // LOGIN RESPONSE
@@ -453,6 +505,7 @@ public class AuthController {
         );
     }
 
+
     // ======================================================
     // CURRENT LOGGED-IN USER
     // GET /api/auth/me
@@ -464,13 +517,17 @@ public class AuthController {
     ) {
 
         // ==================================================
-        // CHECK AUTHENTICATION
+        // AUTHENTICATION CHECK
         // ==================================================
 
         if (
                 authentication == null
-                        ||
-                        !authentication.isAuthenticated()
+                ||
+                authentication.getName() == null
+                ||
+                authentication
+                        .getName()
+                        .isBlank()
         ) {
 
             return ResponseEntity
@@ -480,37 +537,22 @@ public class AuthController {
                     .body(
                             Map.of(
                                     "message",
-                                    "Unauthorized."
+                                    "User is not authenticated."
                             )
                     );
         }
 
+
         // ==================================================
-        // GET EMAIL FROM JWT AUTHENTICATION
+        // GET EMAIL FROM AUTHENTICATION
         // ==================================================
 
         String email =
                 authentication
-                        .getName();
-
-        if (isBlank(email)) {
-
-            return ResponseEntity
-                    .status(
-                            HttpStatus.UNAUTHORIZED
-                    )
-                    .body(
-                            Map.of(
-                                    "message",
-                                    "Unable to identify authenticated user."
-                            )
-                    );
-        }
-
-        email =
-                email
+                        .getName()
                         .trim()
                         .toLowerCase();
+
 
         // ==================================================
         // FIND USER
@@ -522,7 +564,9 @@ public class AuthController {
                                 email
                         );
 
-        if (optionalUser.isEmpty()) {
+        if (
+                optionalUser.isEmpty()
+        ) {
 
             return ResponseEntity
                     .status(
@@ -531,7 +575,7 @@ public class AuthController {
                     .body(
                             Map.of(
                                     "message",
-                                    "User not found."
+                                    "User account not found."
                             )
                     );
         }
@@ -539,11 +583,14 @@ public class AuthController {
         User user =
                 optionalUser.get();
 
+
         // ==================================================
-        // ACTIVE ACCOUNT CHECK
+        // ACTIVE CHECK
         // ==================================================
 
-        if (!user.isActive()) {
+        if (
+                !user.isActive()
+        ) {
 
             return ResponseEntity
                     .status(
@@ -552,10 +599,36 @@ public class AuthController {
                     .body(
                             Map.of(
                                     "message",
-                                    "Your account is inactive. Please contact the administrator."
+                                    "User account is inactive."
                             )
                     );
         }
+
+
+        // ==================================================
+        // ROLE CHECK
+        // ==================================================
+
+        if (
+                user.getRole() == null
+                ||
+                user
+                        .getRole()
+                        .isBlank()
+        ) {
+
+            return ResponseEntity
+                    .status(
+                            HttpStatus.FORBIDDEN
+                    )
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "No valid role is assigned to this account."
+                            )
+                    );
+        }
+
 
         // ==================================================
         // RETURN CURRENT USER
@@ -568,6 +641,7 @@ public class AuthController {
         );
     }
 
+
     // ======================================================
     // SAFE USER RESPONSE
     // PASSWORD NEVER RETURNED
@@ -579,6 +653,11 @@ public class AuthController {
 
         Map<String, Object> response =
                 new LinkedHashMap<>();
+
+        response.put(
+                "id",
+                user.getId()
+        );
 
         response.put(
                 "userId",
@@ -643,6 +722,7 @@ public class AuthController {
         return response;
     }
 
+
     // ======================================================
     // CLEAN OPTIONAL STRING
     // ======================================================
@@ -651,7 +731,10 @@ public class AuthController {
             String value
     ) {
 
-        if (value == null) {
+        if (
+                value == null
+        ) {
+
             return null;
         }
 
@@ -663,6 +746,7 @@ public class AuthController {
                 : cleaned;
     }
 
+
     // ======================================================
     // CHECK BLANK
     // ======================================================
@@ -673,8 +757,11 @@ public class AuthController {
 
         return value == null
                 ||
-                value.trim().isEmpty();
+                value
+                        .trim()
+                        .isEmpty();
     }
+
 
     // ======================================================
     // BAD REQUEST

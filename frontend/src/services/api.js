@@ -72,7 +72,7 @@ const normalizeUser = (data) => {
     role:
       String(
         source.role ||
-        "STUDENT"
+        ""
       )
         .trim()
         .toUpperCase(),
@@ -360,7 +360,18 @@ export const registerUser =
 
 // CURRENT USER
 
-export const getCurrentUser =
+// IMPORTANT:
+// Many ResolveX pages call getCurrentUser() synchronously.
+// Keep this as a local-session getter so Dashboard, Sidebar,
+// Navbar, CreateComplaint, Profile, etc. all receive a user
+// object immediately instead of a Promise.
+export const getCurrentUser = () => {
+  return getStoredUser();
+};
+
+// Use this only when you specifically want to refresh the
+// logged-in user from the backend.
+export const fetchCurrentUser =
   async () => {
     const response =
       await api.get(
@@ -378,6 +389,9 @@ export const getCurrentUser =
 
     return user;
   };
+
+export const refreshCurrentUser =
+  fetchCurrentUser;
 
 // LOGOUT
 
@@ -404,7 +418,7 @@ export const logout =
   logoutUser;
 
 export const getMe =
-  getCurrentUser;
+  fetchCurrentUser;
 
 // ==========================================================
 // USER / PROFILE
@@ -531,7 +545,21 @@ export const getComplaintsByUserId =
 // Dashboard compatibility
 
 export const getUserComplaints =
-  getComplaintsByUserId;
+  async (userId = null) => {
+    const resolvedUserId =
+      userId ??
+      getCurrentUserId();
+
+    if (!resolvedUserId) {
+      throw new Error(
+        "Unable to identify the logged-in user."
+      );
+    }
+
+    return getComplaintsByUserId(
+      resolvedUserId
+    );
+  };
 
 // UPDATE
 

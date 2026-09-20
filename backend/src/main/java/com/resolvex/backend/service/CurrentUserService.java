@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -14,10 +15,16 @@ public class CurrentUserService {
 
     private final UserRepository userRepository;
 
+    // ======================================================
+    // CONSTRUCTOR
+    // ======================================================
+
     public CurrentUserService(
             UserRepository userRepository
     ) {
-        this.userRepository = userRepository;
+
+        this.userRepository =
+                userRepository;
     }
 
     // ======================================================
@@ -31,32 +38,39 @@ public class CurrentUserService {
                         .getContext()
                         .getAuthentication();
 
-        if (authentication == null) {
-            return Optional.empty();
-        }
+        if (
+                authentication == null
+                ||
+                !authentication.isAuthenticated()
+                ||
+                authentication.getName() == null
+                ||
+                authentication.getName().isBlank()
+                ||
+                "anonymousUser".equalsIgnoreCase(
+                        authentication.getName()
+                )
+        ) {
 
-        if (!authentication.isAuthenticated()) {
             return Optional.empty();
         }
 
         String email =
-                authentication.getName();
+                authentication
+                        .getName()
+                        .trim()
+                        .toLowerCase(
+                                Locale.ROOT
+                        );
 
-        if (email == null || email.isBlank()) {
-            return Optional.empty();
-        }
-
-        if ("anonymousUser".equalsIgnoreCase(email)) {
-            return Optional.empty();
-        }
-
-        return userRepository.findByEmail(
-                email.trim().toLowerCase()
-        );
+        return userRepository
+                .findByEmail(
+                        email
+                );
     }
 
     // ======================================================
-    // GET CURRENT USER OR NULL
+    // GET USER OR NULL
     // ======================================================
 
     public User getCurrentUserOrNull() {
@@ -66,104 +80,124 @@ public class CurrentUserService {
     }
 
     // ======================================================
-    // CHECK CURRENT USER ID
+    // CHECK ADMIN
     // ======================================================
 
-    public boolean isCurrentUser(
-            Long userId
-    ) {
+    public boolean isAdmin() {
 
-        if (userId == null) {
-            return false;
-        }
-
-        Optional<User> currentUser =
-                getCurrentUser();
-
-        return currentUser.isPresent()
-                &&
-                userId.equals(
-                        currentUser.get().getId()
-                );
+        return hasRole(
+                "ADMIN"
+        );
     }
 
     // ======================================================
-    // CHECK ROLE
-    // ======================================================
-
-    public boolean hasRole(
-            String role
-    ) {
-
-        if (role == null) {
-            return false;
-        }
-
-        Optional<User> currentUser =
-                getCurrentUser();
-
-        if (currentUser.isEmpty()) {
-            return false;
-        }
-
-        String currentRole =
-                currentUser
-                        .get()
-                        .getRole();
-
-        return currentRole != null
-                &&
-                currentRole.equalsIgnoreCase(
-                        role
-                );
-    }
-
-    // ======================================================
-    // STUDENT
+    // CHECK STUDENT
     // ======================================================
 
     public boolean isStudent() {
-        return hasRole("STUDENT");
+
+        return hasRole(
+                "STUDENT"
+        );
+    }
+
+    // ======================================================
+    // CHECK STAFF
+    // ======================================================
+
+    public boolean isStaff() {
+
+        return hasRole(
+                "STAFF"
+        );
+    }
+
+    // ======================================================
+    // CHECK FACULTY
+    // ======================================================
+
+    public boolean isFaculty() {
+
+        return hasRole(
+                "FACULTY"
+        );
+    }
+
+    // ======================================================
+    // STAFF OR FACULTY
+    // ======================================================
+
+    public boolean isStaffOrFaculty() {
+
+        return isStaff()
+                ||
+                isFaculty();
     }
 
     // ======================================================
     // MANAGEMENT USER
+    //
+    // Used by ComplaintController.
+    // ADMIN + STAFF + FACULTY can manage complaints.
     // ======================================================
 
     public boolean isManagementUser() {
 
-        Optional<User> currentUser =
-                getCurrentUser();
-
-        if (currentUser.isEmpty()) {
-            return false;
-        }
-
-        String role =
-                currentUser
-                        .get()
-                        .getRole();
-
-        if (role == null) {
-            return false;
-        }
-
-        role = role
-                .trim()
-                .toUpperCase();
-
-        return role.equals("STAFF")
+        return isAdmin()
                 ||
-                role.equals("FACULTY")
+                isStaff()
                 ||
-                role.equals("ADMIN");
+                isFaculty();
     }
 
     // ======================================================
-    // ADMIN
+    // ROLE CHECK HELPER
     // ======================================================
 
-    public boolean isAdmin() {
-        return hasRole("ADMIN");
+    public boolean hasRole(
+            String requiredRole
+    ) {
+
+        if (
+                requiredRole == null
+                ||
+                requiredRole.isBlank()
+        ) {
+
+            return false;
+        }
+
+        return getCurrentUser()
+                .map(
+                        user -> {
+
+                            String role =
+                                    user.getRole();
+
+                            return role != null
+                                    &&
+                                    role.equalsIgnoreCase(
+                                            requiredRole
+                                    );
+                        }
+                )
+                .orElse(
+                        false
+                );
+    }
+
+    // ======================================================
+    // ACTIVE USER CHECK
+    // ======================================================
+
+    public boolean isCurrentUserActive() {
+
+        return getCurrentUser()
+                .map(
+                        User::isActive
+                )
+                .orElse(
+                        false
+                );
     }
 }

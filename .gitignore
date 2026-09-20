@@ -1,0 +1,4 @@
+
+backend/hs_err_pid*.log
+backend/replay_pid*.log
+database/resolvex_railway.sql
