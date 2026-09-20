@@ -17,14 +17,14 @@ const api = axios.create({
 });
 
 // ==========================================================
-// STORAGE KEYS
+// LOCAL STORAGE
 // ==========================================================
 
 const TOKEN_KEY = "resolvex_token";
 const USER_KEY = "resolvex_user";
 
 // ==========================================================
-// AUTH STORAGE HELPERS
+// TOKEN / USER HELPERS
 // ==========================================================
 
 export const getToken = () => {
@@ -44,10 +44,9 @@ export const removeToken = () => {
 export const getStoredUser = () => {
   try {
     const value = localStorage.getItem(USER_KEY);
-
     return value ? JSON.parse(value) : null;
   } catch (error) {
-    console.error("Failed to read stored user:", error);
+    console.error("Unable to read stored user:", error);
     return null;
   }
 };
@@ -70,8 +69,19 @@ export const clearAuthData = () => {
   removeStoredUser();
 };
 
+export const isLoggedIn = () => {
+  const token = getToken();
+
+  return Boolean(
+    token &&
+    String(token).trim() !== ""
+  );
+};
+
+export const isAuthenticated = isLoggedIn;
+
 // ==========================================================
-// AXIOS REQUEST INTERCEPTOR
+// REQUEST INTERCEPTOR
 // ==========================================================
 
 api.interceptors.request.use(
@@ -89,13 +99,15 @@ api.interceptors.request.use(
 );
 
 // ==========================================================
-// AXIOS RESPONSE INTERCEPTOR
+// RESPONSE INTERCEPTOR
 // ==========================================================
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (
+      error.response?.status === 401
+    ) {
       clearAuthData();
     }
 
@@ -116,27 +128,31 @@ export const getHealth = checkHealth;
 export const checkBackendHealth = checkHealth;
 
 // ==========================================================
-// AUTHENTICATION
+// REGISTER
 // ==========================================================
 
-export const signupUser = async (userData) => {
+export const registerUser = async (
+  userData
+) => {
   const response = await api.post(
-    "/auth/signup",
+    "/auth/register",
     userData
   );
 
   return response.data;
 };
 
-export const registerUser = signupUser;
-export const signup = signupUser;
-export const register = signupUser;
+export const signupUser = registerUser;
+export const signup = registerUser;
+export const register = registerUser;
 
 // ==========================================================
 // LOGIN
 // ==========================================================
 
-export const loginUser = async (credentials) => {
+export const loginUser = async (
+  credentials
+) => {
   const response = await api.post(
     "/auth/login",
     credentials
@@ -207,7 +223,9 @@ export const logout = logoutUser;
 // USER PROFILE
 // ==========================================================
 
-export const getUserById = async (userId) => {
+export const getUserById = async (
+  userId
+) => {
   const response = await api.get(
     `/users/${userId}`
   );
@@ -247,7 +265,7 @@ export const updateUser =
   updateUserProfile;
 
 // ==========================================================
-// CREATE COMPLAINT
+// COMPLAINTS
 // ==========================================================
 
 export const createComplaint = async (
@@ -261,10 +279,6 @@ export const createComplaint = async (
   return response.data;
 };
 
-// ==========================================================
-// ALL COMPLAINTS
-// ==========================================================
-
 export const getAllComplaints = async () => {
   const response = await api.get(
     "/complaints"
@@ -275,10 +289,6 @@ export const getAllComplaints = async () => {
 
 export const getComplaints =
   getAllComplaints;
-
-// ==========================================================
-// COMPLAINT BY ID
-// ==========================================================
 
 export const getComplaintById = async (
   complaintId
@@ -293,10 +303,6 @@ export const getComplaintById = async (
 export const getComplaint =
   getComplaintById;
 
-// ==========================================================
-// CURRENT USER COMPLAINTS
-// ==========================================================
-
 export const getMyComplaints = async () => {
   const response = await api.get(
     "/complaints/my"
@@ -304,10 +310,6 @@ export const getMyComplaints = async () => {
 
   return response.data;
 };
-
-// ==========================================================
-// COMPLAINTS BY USER ID
-// ==========================================================
 
 export const getComplaintsByUserId =
   async (userId) => {
@@ -318,7 +320,6 @@ export const getComplaintsByUserId =
     return response.data;
   };
 
-// Used by Dashboard.jsx
 export const getUserComplaints =
   async (userId = null) => {
     if (
@@ -332,10 +333,6 @@ export const getUserComplaints =
     return getMyComplaints();
   };
 
-// ==========================================================
-// UPDATE COMPLAINT
-// ==========================================================
-
 export const updateComplaint = async (
   complaintId,
   complaintData
@@ -348,10 +345,6 @@ export const updateComplaint = async (
   return response.data;
 };
 
-// ==========================================================
-// DELETE COMPLAINT
-// ==========================================================
-
 export const deleteComplaint = async (
   complaintId
 ) => {
@@ -363,7 +356,7 @@ export const deleteComplaint = async (
 };
 
 // ==========================================================
-// ASSIGN COMPLAINT
+// COMPLAINT ASSIGNMENT
 // ==========================================================
 
 export const assignComplaint = async (
@@ -393,10 +386,6 @@ export const unassignComplaint = async (
   return response.data;
 };
 
-// ==========================================================
-// ASSIGNED COMPLAINTS
-// ==========================================================
-
 export const getAssignedComplaints =
   async () => {
     const response = await api.get(
@@ -409,6 +398,9 @@ export const getAssignedComplaints =
 export const getMyAssignedComplaints =
   getAssignedComplaints;
 
+export const getStaffComplaints =
+  getAssignedComplaints;
+
 export const getStaffAssignedComplaints =
   getAssignedComplaints;
 
@@ -416,7 +408,7 @@ export const getAssignedToMe =
   getAssignedComplaints;
 
 // ==========================================================
-// UPDATE COMPLAINT STATUS
+// COMPLAINT STATUS
 // ==========================================================
 
 export const updateComplaintStatus =
@@ -433,10 +425,6 @@ export const updateComplaintStatus =
 
     return response.data;
   };
-
-// ==========================================================
-// RESOLVE COMPLAINT
-// ==========================================================
 
 export const resolveComplaint = async (
   complaintId,
@@ -519,9 +507,7 @@ export const clearUserNotifications =
     return response.data;
   };
 
-// ==========================================================
-// NOTIFICATION ALIASES
-// ==========================================================
+// Notification compatibility aliases
 
 export const getNotifications =
   getUserNotifications;
@@ -577,10 +563,6 @@ export const getComplaintCategories =
 export const fetchCategories =
   getCategories;
 
-// ==========================================================
-// ACTIVE CATEGORIES
-// ==========================================================
-
 export const getActiveCategories =
   async () => {
     const response = await api.get(
@@ -593,10 +575,6 @@ export const getActiveCategories =
 export const fetchActiveCategories =
   getActiveCategories;
 
-// ==========================================================
-// CATEGORY BY ID
-// ==========================================================
-
 export const getCategoryById = async (
   categoryId
 ) => {
@@ -606,10 +584,6 @@ export const getCategoryById = async (
 
   return response.data;
 };
-
-// ==========================================================
-// CREATE CATEGORY
-// ==========================================================
 
 export const createCategory = async (
   categoryData
@@ -621,10 +595,6 @@ export const createCategory = async (
 
   return response.data;
 };
-
-// ==========================================================
-// UPDATE CATEGORY
-// ==========================================================
 
 export const updateCategory = async (
   categoryId,
@@ -638,10 +608,6 @@ export const updateCategory = async (
   return response.data;
 };
 
-// ==========================================================
-// TOGGLE CATEGORY STATUS
-// ==========================================================
-
 export const toggleCategoryStatus =
   async (categoryId) => {
     const response = await api.put(
@@ -654,57 +620,47 @@ export const toggleCategoryStatus =
 export const toggleCategory =
   toggleCategoryStatus;
 
-// ==========================================================
-// ACTIVATE CATEGORY
-// ==========================================================
+export const activateCategory = async (
+  categoryId
+) => {
+  try {
+    const response = await api.put(
+      `/categories/${categoryId}/activate`
+    );
 
-export const activateCategory =
-  async (categoryId) => {
-    try {
-      const response = await api.put(
-        `/categories/${categoryId}/activate`
-      );
-
-      return response.data;
-    } catch (error) {
-      if (
-        error?.response?.status === 404 ||
-        error?.response?.status === 405
-      ) {
-        return toggleCategoryStatus(categoryId);
-      }
-
-      throw error;
+    return response.data;
+  } catch (error) {
+    if (
+      error?.response?.status === 404 ||
+      error?.response?.status === 405
+    ) {
+      return toggleCategoryStatus(categoryId);
     }
-  };
 
-// ==========================================================
-// DEACTIVATE CATEGORY
-// ==========================================================
+    throw error;
+  }
+};
 
-export const deactivateCategory =
-  async (categoryId) => {
-    try {
-      const response = await api.put(
-        `/categories/${categoryId}/deactivate`
-      );
+export const deactivateCategory = async (
+  categoryId
+) => {
+  try {
+    const response = await api.put(
+      `/categories/${categoryId}/deactivate`
+    );
 
-      return response.data;
-    } catch (error) {
-      if (
-        error?.response?.status === 404 ||
-        error?.response?.status === 405
-      ) {
-        return toggleCategoryStatus(categoryId);
-      }
-
-      throw error;
+    return response.data;
+  } catch (error) {
+    if (
+      error?.response?.status === 404 ||
+      error?.response?.status === 405
+    ) {
+      return toggleCategoryStatus(categoryId);
     }
-  };
 
-// ==========================================================
-// DELETE CATEGORY
-// ==========================================================
+    throw error;
+  }
+};
 
 export const deleteCategory = async (
   categoryId
@@ -733,10 +689,6 @@ export const getDashboardStats =
 
 export const getAdminDashboardStats =
   getAdminStats;
-
-// ==========================================================
-// ADMIN ANALYTICS
-// ==========================================================
 
 export const getAdminAnalytics =
   async () => {
@@ -768,18 +720,9 @@ export const getAdminUsers = async () => {
   return response.data;
 };
 
-export const getUsers =
-  getAdminUsers;
-
-export const getAllUsers =
-  getAdminUsers;
-
-export const fetchUsers =
-  getAdminUsers;
-
-// ==========================================================
-// ASSIGNABLE STAFF / FACULTY
-// ==========================================================
+export const getUsers = getAdminUsers;
+export const getAllUsers = getAdminUsers;
+export const fetchUsers = getAdminUsers;
 
 export const getAssignableUsers =
   async () => {
@@ -817,10 +760,6 @@ export const getUsersForAssignment =
 export const fetchAssignableUsers =
   getAssignableUsers;
 
-// ==========================================================
-// ADMIN USER BY ID
-// ==========================================================
-
 export const getAdminUserById =
   async (userId) => {
     const response = await api.get(
@@ -829,10 +768,6 @@ export const getAdminUserById =
 
     return response.data;
   };
-
-// ==========================================================
-// CREATE STAFF / FACULTY USER
-// ==========================================================
 
 export const createManagedUser =
   async (userData) => {
@@ -850,10 +785,6 @@ export const createUser =
 export const addUser =
   createManagedUser;
 
-// ==========================================================
-// ACTIVATE USER
-// ==========================================================
-
 export const activateUser = async (
   userId
 ) => {
@@ -866,10 +797,6 @@ export const activateUser = async (
 
 export const enableUser =
   activateUser;
-
-// ==========================================================
-// DEACTIVATE USER
-// ==========================================================
 
 export const deactivateUser = async (
   userId
@@ -885,7 +812,7 @@ export const disableUser =
   deactivateUser;
 
 // ==========================================================
-// ERROR MESSAGE HELPER
+// ERROR HELPER
 // ==========================================================
 
 export const getApiErrorMessage = (
@@ -893,7 +820,8 @@ export const getApiErrorMessage = (
   fallback =
     "Something went wrong. Please try again."
 ) => {
-  const data = error?.response?.data;
+  const data =
+    error?.response?.data;
 
   if (typeof data === "string") {
     return data;
@@ -910,18 +838,5 @@ export const getApiErrorMessage = (
 // ==========================================================
 // DEFAULT EXPORT
 // ==========================================================
-// ==========================================================
-// AUTH STATUS HELPERS
-// ==========================================================
 
-export const isLoggedIn = () => {
-  const token = getToken();
-
-  return Boolean(
-    token &&
-    String(token).trim() !== ""
-  );
-};
-
-export const isAuthenticated = isLoggedIn;
 export default api;
